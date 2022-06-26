@@ -128,18 +128,88 @@ public class Q5 {
      */
     public static String solution4(String input) {
         // 先扩展字符串，^、$是不会在字符串中出现的字符
-        String newInput = "^";
+        String newInput = "!#";
         for (int i = 0; i < input.length(); i++) {
-            newInput += "#" + input.charAt(i);
+            newInput += input.charAt(i) + "#";
         }
-        newInput += "#$";
+        newInput += "$";
 
-        int center = 2, right = 0, maxIndex = 0;
+        // 先锚定一个最长回文串的右边界 right 和中心点 center
+        // 由于回文串中心点两侧一定是一一对应
+        // 故位置 i 处的最大回文串长度应等于 2 center - i 处的最大回文串长度
+        // 但有例外情况 2 center - i < 0; i + p[2 center - i] >= right
+        // 此时需要使用中心扩散
         int[] tmp = new int[newInput.length()];
-        for (int i = 2; i < tmp.length - 1; i++) {
-
+        int right = 0, center = 0, maxIndex = 0;
+        for (int i = 2; i < newInput.length() - 2; i++) {
+            if (i >= right || 2 + center - i < 0 ||  i + tmp[2 * center - i] >= right) {
+                int j = 1;
+                for (; j < tmp.length - i && i - j >= 0; j++) {
+                    if (newInput.charAt(i + j) == newInput.charAt(i - j)) {
+                        continue;
+                    }
+                    break;
+                }
+                tmp[i] = j - 1;
+                if (tmp[maxIndex] < tmp[i]) {
+                    maxIndex = i;
+                }
+                if (right < i + j - 1) {
+                    right = i + j - 1;
+                    center = i;
+                }
+            } else {
+                tmp[i] = tmp[2 * center - i];
+            }
         }
+        center = (maxIndex - tmp[maxIndex]) / 2;
+        return input.substring(center, center + tmp[maxIndex]);
+    }
 
-        return null;
+    /**
+     * 由于创建新对象会消耗更多资源
+     * 尽量不创建新对象反而是最快的
+     */
+    public static String solution5(String input) {
+        C1 demo = new C1();
+        return demo.longestPalindrome(input);
+    }
+
+    static class C1 {
+        int len;
+        char[] chars;
+        int start;
+        int end;
+
+        public String longestPalindrome(String s) {
+
+            start = 0;
+            end = 0;
+            chars = s.toCharArray();
+            len = chars.length;
+
+            process(0);
+            return s.substring(start, end + 1);
+        }
+        public void process(int i){
+
+            if(i >= len || 2 * (len - i) < end - start) return;
+            int startN = i, endN = i;
+            // 偶数回文串
+            while(endN + 1 < len && chars[endN] == chars[endN + 1]) endN++;
+            i = endN;
+            // 奇数回文串
+            while(startN > 0 && endN + 1 < len && chars[startN - 1] == chars[endN + 1]){
+
+                startN--;
+                endN++;
+            }
+            if(endN - startN > end - start){
+
+                end = endN;
+                start = startN;
+            }
+            process(i + 1);
+        }
     }
 }
